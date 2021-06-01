@@ -8,36 +8,35 @@
 
 import UIKit
 import WebKit
+
 class ViewController: UIViewController {
-    var adView:WKWebView = WKWebView()
+    var adView:UIView = UIView()
+    let adManager = SMJWebADHandler.sharedInstance
+    //廣告 url，此為測試用網址，正式上線時請記得換回正確的網址
+    let adUrl:String = "https://test.sitemaji.com/native/sitemaji.html?s=300x250"
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.black
         
-        //廣告 url
-        let adUrl13:String = "http://www.113tools.tw/native.html?s=320x480&l=ios"
-        
-        //320x480廣告
-        let adViewHeight:CGFloat = (self.view.frame.size.width/320) * 480
-        
+        //300x250廣告
         //廣告view預定放置位置及大小
-        let adViewFrame:CGRect = CGRect.init(x: 0, y: 100, width: self.view.frame.size.width, height: adViewHeight)
-        
-        //產生320x480廣告view
-        let adHandler = SMJWebADHandler.sharedInstance
-        
-        //廣告delegate
-        adHandler.delegate = self
+        let adViewFrame:CGRect = CGRect.init(x: 0, y: 0, width: 300, height: 250)
+        //handle ad delegate
+        adManager.delegate = self
         
         //指定一個view來裝廣告
         /*
          - Parameters:
          - adUrl: 廣告網址。
          - frame: 廣告view大小。
+         - isShowCloseButton: 用來控制是否要出現close button，預設為false，可以自已客製外框及關閉按鈕
          */
-        let adView = adHandler.adView(adUrl: adUrl13,frame: adViewFrame)
+        adView = adManager.adView(adUrl: adUrl,frame: adViewFrame,isShowCloseButton: true)
 
+        //可自行決定廣告要放在哪
+        adView.center = self.view.center
+        
         self.view.addSubview(adView)
     }
 }
@@ -47,9 +46,16 @@ extension ViewController:SMJWebADHandlerDelegate {
     //點擊廣告時callback
     func adDidClick() {
         print("ad did click")
+
     }
     //廣告讀取有問題時callback
     func adFetchError(errorMsg: String) {
         print("error:\(errorMsg)")
+    }
+    
+    //廣告關閉按鈕被點擊時，此為optional，isShowCloseButton設為true時請記得實作這個function
+    func adCloseClick() {
+        print("ad close button did click")
+        adView.removeFromSuperview()
     }
 }

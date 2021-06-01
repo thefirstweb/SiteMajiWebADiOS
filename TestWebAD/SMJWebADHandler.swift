@@ -12,6 +12,7 @@ import WebKit
 @objc protocol SMJWebADHandlerDelegate: NSObjectProtocol {
     func adFetchError(errorMsg:String)
     func adDidClick()
+    @objc optional func adCloseClick()
 }
 
 @objc class SMJWebADHandler:NSObject {
@@ -27,8 +28,15 @@ import WebKit
 }
 
 @objc extension SMJWebADHandler:WKUIDelegate {
-    @objc func adView(adUrl:String,frame:CGRect = CGRect.zero) -> WKWebView {
+    /**
+    - Parameters:
+        - adUrl: 廣告網址。
+        - frame: 廣告大小。
+        - isShowCloseButton: 是否顯示關閉按鈕，預設為false。
+    */
+    @objc func adView(adUrl:String,frame:CGRect = CGRect.zero,isShowCloseButton:Bool = false) -> UIView {
         
+        let containView = UIView()
         let adWebView:WKWebView = WKWebView()
         adWebView.frame = frame
         adWebView.uiDelegate = self
@@ -49,7 +57,25 @@ import WebKit
             self.delegate?.adFetchError(errorMsg: "fetch url error")
         }
         
-        return adWebView
+        containView.addSubview(adWebView)
+        
+        if isShowCloseButton {
+            let closeBanner = UIButton()
+            closeBanner.frame = CGRect.init(x: 0, y: adWebView.frame.maxY, width: frame.size.width, height: 40)
+            closeBanner.setTitle("關閉", for: .normal)
+            closeBanner.backgroundColor = .gray
+            closeBanner.addTarget(self, action: #selector(closeButtonClick), for: .touchUpInside)
+            containView.frame = CGRect.init(x: 0, y: 0, width: frame.size.width, height: frame.size.height+40)
+            containView.addSubview(closeBanner)
+        }else{
+            containView.frame = CGRect.init(x: 0, y: 0, width: frame.size.width, height: frame.size.height)
+        }
+        
+        return containView
+    }
+    
+    private func closeButtonClick() {
+        self.delegate?.adCloseClick?()
     }
 }
 
@@ -64,7 +90,7 @@ extension SMJWebADHandler:WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        //blankNothing解決方法1
+        //blankNothing
         if let isMainFrame = navigationAction.targetFrame?.isMainFrame {
             if (!isMainFrame) {
                 webView.load(navigationAction.request)
@@ -100,3 +126,4 @@ extension SMJWebADHandler:WKNavigationDelegate {
         
     }
 }
+
